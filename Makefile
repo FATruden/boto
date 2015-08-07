@@ -2,7 +2,7 @@
 
 PROJECT    ?= boto
 PACKAGE    := python-$(PROJECT)
-VERSION    := $(shell rpm -q --qf "%{version}\n" --specfile $(PACKAGE).spec | head -1)
+VERSION    := $(shell sed -n s/[[:space:]]*Version:[[:space:]]*//p $(PACKAGE).spec)
 
 GIT        := $(shell which git)
 
@@ -12,7 +12,22 @@ TAG := $(shell git show-ref --tags -d | grep $(SHA) |\
 	git name-rev --tags --name-only $$(awk '{ print $2 }'))
 endif
 
-sources: clean
+build:
+	python setup.py build
+
+install:
+	python setup.py install -O1 --skip-build --install-layout=deb --root $(DESTDIR)
+
+distclean:
+	python setup.py clean --all
+	find -name "*pyc" -delete	
+
+clean:
+	@rm -rf build dist $(PROJECT).egg-info $(PROJECT)-*.tar.gz *.egg *.src.rpm "../$(PROJECT)_$(VERSION).orig.tar.gz"
+	python setup.py clean --all
+	find -name "*pyc" -delete
+
+sources:
 ifndef TAG
 	$(eval SHA_DATE :=  $(shell git show -s --format=%ci $(SHA)))
 	$(eval BUILDID  := .$(shell date --date='$(SHA_DATE)' '+%Y%m%d%H%M').git$(SHA))
@@ -29,5 +44,7 @@ srpm: sources
 tests:
 	@tox
 
-clean:
-	@rm -rf build dist $(PROJECT).egg-info $(PROJECT)-*.tar.gz *.egg *.src.rpm
+sources-deb:
+	git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" \
+		HEAD | gzip > "../$(PROJECT)_$(VERSION).orig.tar.gz"
+

@@ -1,0 +1,12 @@
+Source: boto
+Maintainer: Vadim Radovel (NightBlues) <vadim@radovel.ru>
+Section: misc
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 9)
+Standards-Version: 3.9.5
+
+Package: python-boto
+Architecture: all
+Depends: ${misc:Depends}, ${shlibs:Depends}, python
+Description: A simple lightweight interface to Amazon Web Services
+
