@@ -2,7 +2,7 @@
 
 PROJECT    ?= boto
 PACKAGE    := python-$(PROJECT)
-VERSION    := $(shell rpm -q --qf "%{version}\n" --specfile $(PACKAGE).spec | head -1)
+VERSION    := $(shell sed -n s/[[:space:]]*Version:[[:space:]]*//p $(PKG_NAME).spec)
 
 GIT        := $(shell which git)
 
@@ -29,5 +29,26 @@ srpm: sources
 tests:
 	@tox
 
+build:
+	python setup.py build
+
+install:
+	python setup.py install -O1 --skip-build --install-layout=deb --root $(DESTDIR)
+
+distclean:
+	python setup.py clean --all
+	find -name "*pyc" -delete
+
 clean:
-	@rm -rf build dist $(PROJECT).egg-info $(PROJECT)-*.tar.gz *.egg *.src.rpm
+	@rm -rf build dist $(PROJECT).egg-info $(PROJECT)-*.tar.gz *.egg *.src.rpm "../$(PROJECT)_$(VERSION).orig.tar.gz"
+	python setup.py clean --all
+	find -name "*pyc" -delete
+
+sources:
+	@git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" \
+		HEAD | gzip > "$(PROJECT)-$(VERSION).tar.gz"
+
+sources-deb:
+	git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" \
+		HEAD | gzip > "../$(PROJECT)_$(VERSION).orig.tar.gz"
+
